@@ -1,4 +1,5 @@
 library(yaml)
+library(dplyr)
 
 
 ledge = yaml.load_file("./data/legislators-historical.yaml")
