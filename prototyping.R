@@ -63,10 +63,12 @@ ledge_df$end <- ymd(ledge_df$end)
 ledge_df$gender <- as.factor(ledge_df$gender)
 ledge_df$party <- as.factor(ledge_df$party)
 ledge_df$type <- as.factor(ledge_df$type)
+ledge_df$dur <- ledge_df$end - ledge_df$start
 
 
 senators <- ledge_df %>% 
-  filter(type=="sen") %>% 
+  filter(dur < 22000) %>%
+  filter(type=="rep") %>% 
   filter(party %in% c("Democrat", "Republican"))%>% 
   arrange(start, end) 
 
@@ -75,5 +77,5 @@ theSplines <- bind_rows(temp)
 
 ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) + 
   geom_xspline(spline_shape = -0.5, size=0.2) +
-  scale_color_manual("Senate", values=c("blue", "red")) +
+  scale_color_manual("US House", values=c("blue", "red")) +
   theme_few() + xlab("Year") + ylab("Days Served")
