@@ -48,8 +48,8 @@ splinePoints <- function(theIndex, df){
   
   # this output dataframe defines the shape of the spline. Lots of 
   # customization here.
-  data.frame(x=quantile(c(e$start, e$end), probs=c(0,.15,0.5,.85,1)), 
-             y=c(0, peak*.85,peak, peak*.85, 0),
+  data.frame(x=quantile(c(e$start, e$end), probs=c(0,.15,.85,1)), 
+             y=c(0, peak*.85, peak*.85, 0),
              splineIndex = e$id,
              party=e$party)
 }
@@ -66,16 +66,20 @@ ledge_df$type <- as.factor(ledge_df$type)
 ledge_df$dur <- ledge_df$end - ledge_df$start
 
 
-senators <- ledge_df %>% 
+body <- ledge_df %>% 
   filter(dur < 22000) %>%
   filter(type=="rep") %>% 
   filter(party %in% c("Democrat", "Republican"))%>% 
   arrange(start, end) 
 
-temp <- lapply(X=senators$id, FUN=splinePoints, senators)
+temp <- lapply(X=body$id, FUN=splinePoints, body)
 theSplines <- bind_rows(temp)
 
 ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) + 
   geom_xspline(spline_shape = -0.5, size=0.2) +
   scale_color_manual("US House", values=c("blue", "red")) +
-  theme_few() + xlab("Year") + ylab("Days Served")
+  theme_few() + theme(axis.text.y = element_blank(),
+                      axis.title.y = element_blank(),
+                      axis.ticks.y = element_blank(),
+                      panel.border = element_blank()) +
+  xlab("Year")
