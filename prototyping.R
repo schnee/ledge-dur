@@ -28,6 +28,7 @@ extractElements <- function(e){
   type <- firstTerm$type
   
   data.frame(id=id, firstName=firstName, lastName=lastName, gender=gender, 
+             numTerms = numTerms,
              start=termStart, 
              end=termEnd, 
              party=party, 
@@ -40,7 +41,8 @@ splinePoints <- function(theIndex, df){
   e <- df[df$id==theIndex,]
   
   # the number of days is how high the spline should reach
-  peak <- e$end - e$start
+  #peak <- e$end - e$start
+  peak <- e$numTerms
   
   if(!is.null(e$party) && e$party=="Republican"){
     peak<--1*peak
@@ -68,7 +70,7 @@ ledge_df$dur <- ledge_df$end - ledge_df$start
 
 body <- ledge_df %>% 
   filter(dur < 22000) %>%
-  filter(type=="rep") %>% 
+  filter(type=="sen") %>% 
   filter(party %in% c("Democrat", "Republican"))%>% 
   arrange(start, end) 
 
@@ -77,9 +79,29 @@ theSplines <- bind_rows(temp)
 
 ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) + 
   geom_xspline(spline_shape = -0.5, size=0.2) +
-  scale_color_manual("US House", values=c("blue", "red")) +
+  scale_color_manual("US Senate", values=c("blue", "red")) +
   theme_few() + theme(axis.text.y = element_blank(),
                       axis.title.y = element_blank(),
                       axis.ticks.y = element_blank(),
                       panel.border = element_blank()) +
   xlab("Year")
+
+bks = seq(trunc(min(year(body$end)) / 10) * 10, trunc(max(year(body$end)) / 10) * 10 + 10, 10)
+body$decade = bks[cut(year(body$end), breaks=bks, labels=FALSE)]
+
+decades <- body %>% filter(decade>"1860") %>% 
+  group_by(decade,party) %>% 
+  summarize(aveDur = mean(as.numeric(dur, units="days")/365),
+            aveTerms = mean(numTerms)) 
+
+decades %>% 
+  select(decade, party, aveTerms) %>%
+  spread(party,aveTerms) %>% 
+  knitr::kable(digits = 0)
+
+ggplot(decades, aes(x=decade, y=aveTerms, colour=party)) + 
+  geom_point() + geom_smooth(method="lm", se=F) +
+  scale_color_manual("US Senate", values=c("blue", "red")) +
+  theme_few() + ylab("Average Number of Terms") +
+  theme(panel.border = element_blank()) 
+
