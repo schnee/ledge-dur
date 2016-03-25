@@ -111,8 +111,7 @@ temp <- lapply(X=body$id, FUN=splinePoints, body)
 theSplines <- bind_rows(temp)
 
 ggplot(theSplines, aes(x, y, group=splineIndex)) + 
-  geom_xspline(spline_shape = -0.5, size=0.2) +
-  scale_color_manual("US Senate", values=c("grey")) +
+  geom_xspline(spline_shape = -0.5, size=0.2, colour="black") +
   theme_few() + theme(axis.text.y = element_blank(),
                       axis.title.y = element_blank(),
                       axis.ticks.y = element_blank(),
@@ -120,7 +119,49 @@ ggplot(theSplines, aes(x, y, group=splineIndex)) +
   xlab("Year")
 
 ```
-This plot shows the values of the 
+
+This plot shows the service arcs of every Senator to have *finished* serving (that is, currently sitting Senators are not shown). The heights of the arcs are related to the number of terms served the the horizontal axis progresses by year to the right. The arcs tend to get higher over time, which indicates that Senators are serving longer. The horizontal striations - the *levels* - exactly correspond to the number of terms served: one term, two terms, etc.
+
+```{r echo=FALSE}
+bks = seq(trunc(min(year(body$end)) / 10) * 10, trunc(max(year(body$end)) / 10) * 10 + 10, 10)
+body$decade = bks[cut(year(body$end), breaks=bks, labels=FALSE)]
+
+decades <- body %>%
+  group_by(decade) %>% 
+  summarize(aveDur = mean(as.numeric(dur, units="days")/365),
+            aveTerms = mean(numTerms)) 
+
+ggplot(decades, aes(x=decade, y=aveTerms, colour=decade)) + 
+  geom_point(colour="black") + geom_smooth(method="lm", se=F, linetype="dashed", size=0.5) +
+  theme_few() + ylab("Average Number of Terms") +
+  xlab("Decade in Which Service Expired") +
+  theme(panel.border = element_blank()) 
+
+```
+
+The average of the number of terms for every Senator who finished servicing in a partcular decade clearly shows an up-and-to-the-right increase: the number of terms each Senator is serving is increasing.
+
+```{r echo=FALSE, message=FALSE}
+belows = c("Republican", "Jackson", "Unknown", "Adams", "American", "Populist")
+ledge_df[ledge_df$party %in% belows,]$numTerms <- ledge_df[ledge_df$party %in% belows,]$numTerms * -1
+
+body <- ledge_df %>% 
+  filter(dur < 22000) %>%
+  filter(type=="sen") %>% 
+  arrange(start, end) 
+
+temp <- lapply(X=body$id, FUN=splinePoints, body)
+theSplines <- bind_rows(temp)
+
+ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) + 
+  geom_xspline(spline_shape = -0.5, size=0.2) +
+  theme_few() + theme(axis.text.y = element_blank(),
+                      axis.title.y = element_blank(),
+                      axis.ticks.y = element_blank(),
+                      panel.border = element_blank()) +
+  xlab("Year") + labs(colour="Party\nAffiliation")
+```
+
 ## Including Plots
 
 You can also embed plots, for example:
