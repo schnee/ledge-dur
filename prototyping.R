@@ -100,7 +100,7 @@ decades %>%
   knitr::kable(digits = 0)
 
 ggplot(decades, aes(x=decade, y=aveTerms, colour=party)) + 
-  geom_point() + geom_smooth(method="lm", se=F) +
+  geom_point() + geom_smooth(method="lm", se=F, linetype="dashed", size=0.5) +
   scale_color_manual("US Senate", values=c("blue", "red")) +
   theme_few() + ylab("Average Number of Terms") +
   theme(panel.border = element_blank()) 
