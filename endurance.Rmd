@@ -1,10 +1,18 @@
+---
+title: "Legislative Endurance"
+author: "Brent Schneeman"
+date: "March 25, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 library(yaml)
 library(dplyr)
 library(lubridate)
 library(ggplot2)
 library(ggalt)
 library(ggthemes)
-
 
 ledge <- yaml.load_file("./data/legislators-historical.yaml")
 
@@ -40,10 +48,9 @@ splinePoints <- function(theIndex, df){
   
   e <- df[df$id==theIndex,]
   
-  # the number of days is how high the spline should reach
-  #peak <- e$end - e$start
+  # the number of terms is how high the spline should reach
   peak <- e$numTerms
-
+  
   # this output dataframe defines the shape of the spline. Lots of 
   # customization here.
   data.frame(x=quantile(c(e$start, e$end), probs=c(0,.15,.85,1)), 
@@ -65,6 +72,8 @@ ledge_df$dur <- ledge_df$end - ledge_df$start
 
 ledge_df[ledge_df$party=="Republican",]$numTerms <- ledge_df[ledge_df$party=="Republican",]$numTerms * -1
 
+```
+```{r Senate, echo=FALSE}
 
 body <- ledge_df %>% 
   filter(dur < 22000) %>%
@@ -83,23 +92,41 @@ ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) +
                       axis.ticks.y = element_blank(),
                       panel.border = element_blank()) +
   xlab("Year")
+```
 
-bks = seq(trunc(min(year(body$end)) / 10) * 10, trunc(max(year(body$end)) / 10) * 10 + 10, 10)
-body$decade = bks[cut(year(body$end), breaks=bks, labels=FALSE)]
+## The Decline of American Politics
 
-decades <- body %>% filter(decade>"1860") %>% 
-  group_by(decade,party) %>% 
-  summarize(aveDur = mean(as.numeric(dur, units="days")/365),
-            aveTerms = mean(numTerms)) 
+The Founding Fathers created the United States with the concept of citizen servants in mind. Men (originally, and land-owners at that) would represent constituents for a time and then return to their lives. Fresh-off the American Revolution, and having land to tend, this seemed like a good idea: who would want to spend time governing instead of working the land and being a member of the community where you built your life?
 
-decades %>% 
-  select(decade, party, aveTerms) %>%
-  spread(party,aveTerms) %>% 
-  knitr::kable(digits = 0)
+After being elected to two terms of the Presidency, George Washington decided to not run again, not wanting to create a democratic monarchy. Soon, the  government codified Presidential Term Limits in the US Constitution. Those term limits never trickled down to the Senate or the House; over time, legislators have spent more and more time legislating at the expense of being a member of their "home" communities.
 
-ggplot(decades, aes(x=decade, y=aveTerms, colour=party)) + 
-  geom_point() + geom_smooth(method="lm", se=F, linetype="dashed", size=0.5) +
-  scale_color_manual("US Senate", values=c("blue", "red")) +
-  theme_few() + ylab("Average Number of Terms") +
-  theme(panel.border = element_blank()) 
+```{r echo=FALSE}
+ledge_df[ledge_df$party=="Republican",]$numTerms <- ledge_df[ledge_df$party=="Republican",]$numTerms * -1
 
+body <- ledge_df %>% 
+  filter(type=="sen") %>% 
+  arrange(start, end) 
+
+temp <- lapply(X=body$id, FUN=splinePoints, body)
+theSplines <- bind_rows(temp)
+
+ggplot(theSplines, aes(x, y, group=splineIndex)) + 
+  geom_xspline(spline_shape = -0.5, size=0.2) +
+  scale_color_manual("US Senate", values=c("grey")) +
+  theme_few() + theme(axis.text.y = element_blank(),
+                      axis.title.y = element_blank(),
+                      axis.ticks.y = element_blank(),
+                      panel.border = element_blank()) +
+  xlab("Year")
+
+```
+This plot shows the values of the 
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
