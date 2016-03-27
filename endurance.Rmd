@@ -18,39 +18,57 @@ ledge <- yaml.load_file("./data/legislators-historical.yaml")
 
 # want to create a dataframe with id, name, term type, term start, term end, and party out of the ledge object
 
+
 extractElements <- function(e){
   id <- e$id$govtrack
   firstName <- e$name$first
   lastName <- e$name$last
   gender<-e$bio$gender
 
-  numTerms = length(e$terms)
-  firstTerm <- e$terms[[1]]
-  lastTerm <- e$terms[[numTerms]]
-  termStart <- firstTerm$start
-  termEnd <- lastTerm$end
-  party <- firstTerm$party
-  if(is.null(party)) {
-    party<-"Unknown"
-  }
-  type <- firstTerm$type
+  terms = bind_rows(lapply(e$terms, FUN=function(t) data.frame(
+    type=t$type, 
+    start=t$start, 
+    end=t$end, 
+    party=if(is.null(t$party)) "Unknown" else t$party, stringsAsFactors = F)))
   
-  data.frame(id=id, firstName=firstName, lastName=lastName, gender=gender, 
-             numTerms = numTerms,
-             start=termStart, 
-             end=termEnd, 
-             party=party, 
-             type=type, 
-             stringsAsFactors = F)
+  terms <- terms %>% arrange(start)
+  
+  # some legislators will jump between the House and the Senate, which is encoded
+  # as "rep" or "sen" in terms$type. The RLE function figures out how many terms
+  # each "run" of House or Senate lasts.
+  
+  runs <- rle(terms$type)
+  
+  # these statements pick out the start and end of each run, along with the parties
+  # and the body served (the type).
+  
+  # Note that it is possible for a legislator to switch parties; I'm not dealing with
+  # that. yet.
+  
+  starts <- terms$start[c(1,cumsum(head(runs$lengths,-1)) +1)]
+  ends <- terms$end[cumsum(runs$lengths)]
+  parties <- terms$party[cumsum(runs$lengths)]
+  types <- terms$type[cumsum(runs$lengths)]
+  
+  data.frame(id=rep(id, length(starts)),
+             firstName = rep(firstName, length(starts)),
+             lastName = rep(lastName, length(starts)),
+             gender = rep(gender, length(starts)),
+             numTerms = runs$lengths,
+             start = starts,
+             end = ends,
+             party = parties,
+             type = types,
+             stringsAsFactors = FALSE)
 }
 
 splinePoints <- function(theIndex, df){
   
-  e <- df[df$id==theIndex,]
+  e <- df[theIndex,]
   
-  # the number of terms is how high the spline should reach
+  # peak of the spline is the number of terms served
   peak <- e$numTerms
-  
+
   # this output dataframe defines the shape of the spline. Lots of 
   # customization here.
   data.frame(x=quantile(c(e$start, e$end), probs=c(0,.15,.85,1)), 
@@ -81,8 +99,10 @@ body <- ledge_df %>%
   filter(party %in% c("Democrat", "Republican"))%>% 
   arrange(start, end) 
 
-temp <- lapply(X=body$id, FUN=splinePoints, body)
+# cheap and dirty way to move along a dataframe
+temp <- lapply(X=seq_len(nrow(body)), splinePoints, body)
 theSplines <- bind_rows(temp)
+
 
 ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) + 
   geom_xspline(spline_shape = -0.5, size=0.2) +
@@ -101,14 +121,16 @@ The Founding Fathers created the United States with the concept of citizen serva
 After being elected to two terms of the Presidency, George Washington decided to not run again, not wanting to create a democratic monarchy. Soon, the  government codified Presidential Term Limits in the US Constitution. Those term limits never trickled down to the Senate or the House; over time, legislators have spent more and more time legislating at the expense of being a member of their "home" communities.
 
 ```{r echo=FALSE}
-ledge_df[ledge_df$party=="Republican",]$numTerms <- ledge_df[ledge_df$party=="Republican",]$numTerms * -1
+ledge_df$numTerms = abs(ledge_df$numTerms)
 
 body <- ledge_df %>% 
   filter(type=="sen") %>% 
   arrange(start, end) 
 
-temp <- lapply(X=body$id, FUN=splinePoints, body)
+# cheap and dirty way to move along a dataframe
+temp <- lapply(X=seq_len(nrow(body)), splinePoints, body)
 theSplines <- bind_rows(temp)
+
 
 ggplot(theSplines, aes(x, y, group=splineIndex)) + 
   geom_xspline(spline_shape = -0.5, size=0.2, colour="black") +
@@ -141,8 +163,11 @@ ggplot(decades, aes(x=decade, y=aveTerms, colour=decade)) +
 
 The average of the number of terms for every Senator who finished servicing in a partcular decade clearly shows an up-and-to-the-right increase: the number of terms each Senator is serving is increasing.
 
+## Party Time
+
 ```{r echo=FALSE, message=FALSE}
 belows = c("Republican", "Jackson", "Unknown", "Adams", "American", "Populist")
+ldf = ledge_df
 ledge_df[ledge_df$party %in% belows,]$numTerms <- ledge_df[ledge_df$party %in% belows,]$numTerms * -1
 
 body <- ledge_df %>% 
@@ -150,7 +175,8 @@ body <- ledge_df %>%
   filter(type=="sen") %>% 
   arrange(start, end) 
 
-temp <- lapply(X=body$id, FUN=splinePoints, body)
+# cheap and dirty way to move along a dataframe
+temp <- lapply(X=seq_len(nrow(body)), splinePoints, body)
 theSplines <- bind_rows(temp)
 
 ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) + 
@@ -161,6 +187,37 @@ ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) +
                       panel.border = element_blank()) +
   xlab("Year") + labs(colour="Party\nAffiliation")
 ```
+
+American politics are dominated by political parties, and America has had lots of Senators from across a wide spectrum serve. Trying to break them out visually is difficult, and probably not all that important. While the "Liberal Republican", "Readjuster", and other parties have a place in American History; today, the landscape is dominated by two parties: "Democrat" and "Republican".
+
+```{r echo=FALSE}
+ledge_df = ldf
+
+ledge_df[ledge_df$party=="Republican",]$numTerms <- ledge_df[ledge_df$party=="Republican",]$numTerms * -1
+
+body <- ledge_df %>% 
+  filter(dur < 22000) %>%
+  filter(type=="sen") %>% 
+  filter(party %in% c("Democrat", "Republican"))%>% 
+  arrange(start, end) 
+
+# cheap and dirty way to move along a dataframe
+temp <- lapply(X=seq_len(nrow(body)), splinePoints, body)
+theSplines <- bind_rows(temp)
+
+
+ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) + 
+  geom_xspline(spline_shape = -0.5, size=0.2) +
+  scale_color_manual("US Senate", values=c("blue", "red")) +
+  theme_few() + theme(axis.text.y = element_blank(),
+                      axis.title.y = element_blank(),
+                      axis.ticks.y = element_blank(),
+                      panel.border = element_blank()) +
+  xlab("Year")
+
+```
+
+Which brings us to the plot at the top of this post (replicated immediately above). It shows every Democrat and Republican Senator who has served since the inception of the Union (not including those currently serving).
 
 ## Including Plots
 
