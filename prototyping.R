@@ -85,7 +85,7 @@ ledge_df[ledge_df$party=="Republican",]$numTerms <- ledge_df[ledge_df$party=="Re
 
 body <- ledge_df %>% 
   filter(dur < 22000) %>%
-  filter(type=="sen") %>% 
+  filter(type=="rep") %>% 
   filter(party %in% c("Democrat", "Republican"))%>% 
   arrange(start, end) 
 
@@ -105,7 +105,7 @@ ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) +
 bks = seq(trunc(min(year(body$end)) / 10) * 10, trunc(max(year(body$end)) / 10) * 10 + 10, 10)
 body$decade = bks[cut(year(body$end), breaks=bks, labels=FALSE)]
 
-decades <- body %>% filter(decade>"1860") %>% 
+decades <- body %>% filter(decade>"1930") %>% 
   group_by(decade,party) %>% 
   summarize(aveDur = mean(as.numeric(dur, units="days")/365),
             aveTerms = mean(abs(numTerms))) 
@@ -120,5 +120,5 @@ ggplot(decades, aes(x=decade, y=aveTerms, colour=party)) +
   geom_point() + geom_smooth(method="lm", se=F, linetype="dashed", size=0.5) +
   scale_color_manual("US Senate", values=c("blue", "red")) +
   theme_few() + ylab("Average Number of Terms") +
-  theme(panel.border = element_blank()) 
+  theme(panel.border = element_blank()) + coord_cartesian(ylim=c(0,8))
 
