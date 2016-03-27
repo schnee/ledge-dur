@@ -4,6 +4,7 @@ library(lubridate)
 library(ggplot2)
 library(ggalt)
 library(ggthemes)
+library(tidyr)
 
 
 ledge <- yaml.load_file("./data/legislators-historical.yaml")
@@ -16,32 +17,48 @@ extractElements <- function(e){
   lastName <- e$name$last
   gender<-e$bio$gender
 
-  numTerms = length(e$terms)
-  firstTerm <- e$terms[[1]]
-  lastTerm <- e$terms[[numTerms]]
-  termStart <- firstTerm$start
-  termEnd <- lastTerm$end
-  party <- firstTerm$party
-  if(is.null(party)) {
-    party<-"Unknown"
-  }
-  type <- firstTerm$type
+  terms = bind_rows(lapply(e$terms, FUN=function(t) data.frame(
+    type=t$type, 
+    start=t$start, 
+    end=t$end, 
+    party=if(is.null(t$party)) "Unknown" else t$party, stringsAsFactors = F)))
   
-  data.frame(id=id, firstName=firstName, lastName=lastName, gender=gender, 
-             numTerms = numTerms,
-             start=termStart, 
-             end=termEnd, 
-             party=party, 
-             type=type, 
-             stringsAsFactors = F)
+  terms <- terms %>% arrange(start)
+  
+  # some legislators will jump between the House and the Senate, which is encoded
+  # as "rep" or "sen" in terms$type. The RLE function figures out how many terms
+  # each "run" of House or Senate lasts.
+  
+  runs <- rle(terms$type)
+  
+  # these statements pick out the start and end of each run, along with the parties
+  # and the body served (the type).
+  
+  # Note that it is possible for a legislator to switch parties; I'm not dealing with
+  # that. yet.
+  
+  starts <- terms$start[c(1,cumsum(head(runs$lengths,-1)) +1)]
+  ends <- terms$end[cumsum(runs$lengths)]
+  parties <- terms$party[cumsum(runs$lengths)]
+  types <- terms$type[cumsum(runs$lengths)]
+  
+  data.frame(id=rep(id, length(starts)),
+             firstName = rep(firstName, length(starts)),
+             lastName = rep(lastName, length(starts)),
+             gender = rep(gender, length(starts)),
+             numTerms = runs$lengths,
+             start = starts,
+             end = ends,
+             party = parties,
+             type = types,
+             stringsAsFactors = FALSE)
 }
 
 splinePoints <- function(theIndex, df){
   
-  e <- df[df$id==theIndex,]
+  e <- df[theIndex,]
   
-  # the number of days is how high the spline should reach
-  #peak <- e$end - e$start
+  # peak of the spline is the number of terms served
   peak <- e$numTerms
 
   # this output dataframe defines the shape of the spline. Lots of 
@@ -72,7 +89,8 @@ body <- ledge_df %>%
   filter(party %in% c("Democrat", "Republican"))%>% 
   arrange(start, end) 
 
-temp <- lapply(X=body$id, FUN=splinePoints, body)
+# cheap and dirty way to move along a dataframe
+temp <- lapply(X=seq_len(nrow(body)), splinePoints, body)
 theSplines <- bind_rows(temp)
 
 ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) + 
@@ -90,8 +108,9 @@ body$decade = bks[cut(year(body$end), breaks=bks, labels=FALSE)]
 decades <- body %>% filter(decade>"1860") %>% 
   group_by(decade,party) %>% 
   summarize(aveDur = mean(as.numeric(dur, units="days")/365),
-            aveTerms = mean(numTerms)) 
+            aveTerms = mean(abs(numTerms))) 
 
+# the average terms served by party per decade
 decades %>% 
   select(decade, party, aveTerms) %>%
   spread(party,aveTerms) %>% 
