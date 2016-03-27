@@ -85,7 +85,7 @@ ledge_df[ledge_df$party=="Republican",]$numTerms <- ledge_df[ledge_df$party=="Re
 
 body <- ledge_df %>% 
   filter(dur < 22000) %>%
-  filter(type=="rep") %>% 
+  filter(type=="sen") %>% 
   filter(party %in% c("Democrat", "Republican"))%>% 
   arrange(start, end) 
 

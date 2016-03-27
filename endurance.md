@@ -5,7 +5,7 @@ March 25, 2016
 
 ![](endurance_files/figure-html/Senate-1.png)
 
-# Entrenched Interests
+## Entrenched Interests
 
 The Founding Fathers created the United States with the concept of citizen servants in mind. Men (originally, and land-owners at that) would represent constituents for a time and then return to their lives. Fresh-off the American Revolution, and having land to tend, this seemed like a good idea: who would want to spend time governing instead of working the land and being a member of the community where you built your life?
 
@@ -21,7 +21,7 @@ This plot shows the service arcs of every Senator to have *finished* serving (th
 
 A simple scatter plot (with a trend-line) shows the average of the number of terms for every Senator who finished serving in a partcular decade. This clearly shows an up-and-to-the-right increase: the number of terms each Senator is serving is increasing.
 
-# Party time
+## Party time
 
 ![](endurance_files/figure-html/unnamed-chunk-3-1.png)
 
@@ -39,9 +39,27 @@ The slope of the trendline for the "Democrat" label (0.019) is over twice that o
 
 ![](endurance_files/figure-html/unnamed-chunk-6-1.png)
 
-Here, the Democrats "enjoy" a more modest trend advantage. Senate elections are statewide and cannot be "gerrymandered" efficienctly. In the House, both parties benefit from "safe" legislative districts that are designed to protect incumbancy. The slopes for the House may relfect this as they are steeper - in each decade, Representatives gain more tenure than their Senate counterparts.
+Here, the Democrats "enjoy" a more modest trend advantage. Senate elections are statewide and cannot be "gerrymandered" efficienctly. In the House, both parties benefit from "safe" legislative districts that are designed to protect incumbency. The slopes for the House may relfect this as they are steeper - in each decade, Representatives gain more tenure than their Senate counterparts.
 
-# Credits, Rights and How-to
+## Most Professional
+
+
+firstName   lastName     party         numTerms  start        end          dur        
+----------  -----------  -----------  ---------  -----------  -----------  -----------
+Robert      Byrd         Democrat             9  1959-01-07   2010-06-28   18800 days 
+Daniel      Inouye       Democrat             9  1963-01-09   2012-12-17   18240 days 
+J.          Thurmond     Republican           9  1955-01-05   2003-01-03   17530 days 
+Edward      Kennedy      Democrat             9  1962-01-01   2009-08-25   17403 days 
+John        Crittenden   American             4  1817-12-01   1861-03-03   15798 days 
+John        Stennis      Democrat             7  1947-01-03   1989-01-03   15341 days 
+William     Stewart      Republican           5  1864-01-01   1905-03-03   15036 days 
+William     Whyte        Democrat             3  1868-01-01   1909-03-03   15036 days 
+Carl        Hayden       Democrat             7  1927-12-05   1969-01-03   15005 days 
+Ted         Stevens      Republican           7  1968-01-01   2009-01-03   14978 days 
+
+The top ten longest serving Senators, presented as FYI.
+
+## Credits, Rights and How-to
 
 The source data for these plots is courtesy of [GovTrack.us](https://www.govtrack.us/), and specifically their [historical legislator](https://github.com/govtrack/congress-legislators) YAML dataset. GovTrack releases any of their copyrighted data into the public domain, under a [CC-BY Creative Commons](https://creativecommons.org/licenses/by/3.0/us/) license; I do the same for the plots and code used to create this.
 
