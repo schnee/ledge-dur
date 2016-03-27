@@ -2,7 +2,9 @@
 title: "Legislative Endurance"
 author: "Brent Schneeman"
 date: "March 25, 2016"
-output: html_document
+output: 
+  html_document: 
+    keep_md: yes
 license: CC-BY
 ---
 
@@ -265,7 +267,7 @@ ggplot(decades, aes(x=decade, y=aveTerms, colour=party)) +
 
 ```
 
-Here, the Democrats "enjoy" more modest trend advantage. Senate elections are statewide and cannot be "gerrymandered" efficienctly. In the House, both parties benefit from "safe" legislative districts that are designed to protect incumbancy. The slopes for the House may relfect this as they are steeper - in each decade, Representatives gain more tenure than their Senate counterparts.
+Here, the Democrats "enjoy" a more modest trend advantage. Senate elections are statewide and cannot be "gerrymandered" efficienctly. In the House, both parties benefit from "safe" legislative districts that are designed to protect incumbancy. The slopes for the House may relfect this as they are steeper - in each decade, Representatives gain more tenure than their Senate counterparts.
 
 # Credits, Rights and How-to
 
