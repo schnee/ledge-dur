@@ -59,7 +59,13 @@ Ted         Stevens      Republican           7  1968-01-01   2009-01-03   14978
 
 The top ten longest serving Senators, presented as FYI.
 
-## Credits, Rights and How-to
+## US House Visuals
+
+For completeness, the US House of Representative versions of many of the above graphs.
+
+![](endurance_files/figure-html/unnamed-chunk-8-1.png)![](endurance_files/figure-html/unnamed-chunk-8-2.png)
+
+## Credits, Rights, and How-to
 
 The source data for these plots is courtesy of [GovTrack.us](https://www.govtrack.us/), and specifically their [historical legislator](https://github.com/govtrack/congress-legislators) YAML dataset. GovTrack releases any of their copyrighted data into the public domain, under a [CC-BY Creative Commons](https://creativecommons.org/licenses/by/3.0/us/) license; I do the same for the plots and code used to create this.
 

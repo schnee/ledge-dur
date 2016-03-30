@@ -172,8 +172,7 @@ A simple scatter plot (with a trend-line) shows the average of the number of ter
 
 ```{r echo=FALSE, message=FALSE}
 belows = c("Republican", "Jackson", "Unknown", "Adams", "American", "Populist")
-ldf = ledge_df
-ledge_df[ledge_df$party %in% belows,]$numTerms <- ledge_df[ledge_df$party %in% belows,]$numTerms * -1
+ledge_df[ledge_df$party %in% belows,]$numTerms <- abs(ledge_df[ledge_df$party %in% belows,]$numTerms) * -1
 
 body <- ledge_df %>% 
   filter(dur < 22000) %>%
@@ -196,9 +195,8 @@ ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) +
 American politics and political parties go hand-in-hand. America has had lots of Senators from across a wide spectrum of parties serve. Trying to break them out visually is difficult, and probably not all that important. While the "Liberal Republican", "Readjuster", and other parties have a place in American History, today the landscape is dominated by two parties: "Democrat" and "Republican". A two-party system has been in-place since just after the Founding. Our "winner-takes-all" election system tends to suppress third-party efforts as coalitions are formed to garner the greatest number of votes.
 
 ```{r echo=FALSE}
-ledge_df = ldf
 
-ledge_df[ledge_df$party=="Republican",]$numTerms <- ledge_df[ledge_df$party=="Republican",]$numTerms * -1
+ledge_df[ledge_df$party=="Republican",]$numTerms <- abs(ledge_df[ledge_df$party=="Republican",]$numTerms) * -1
 
 body <- ledge_df %>% 
   filter(dur < 22000) %>%
@@ -286,7 +284,59 @@ body %>% mutate(numTerms = abs(numTerms)) %>%
 
 The top ten longest serving Senators, presented as FYI.
 
-## Credits, Rights and How-to
+## US House Visuals
+
+For completeness, the US House of Representative versions of many of the above graphs.
+
+```{r, echo=FALSE, message=FALSE}
+
+belows = c("Republican", "Jackson", "Unknown", "Adams", "American", "Populist", "Whig")
+
+ledge_df[ledge_df$party %in% belows,]$numTerms <- abs(ledge_df[ledge_df$party %in% belows,]$numTerms) * -1
+
+body <- ledge_df %>% 
+  filter(dur < 22000) %>%
+  filter(type=="rep") %>% 
+  arrange(start, end) 
+
+# cheap and dirty way to move along a dataframe
+temp <- lapply(X=seq_len(nrow(body)), splinePoints, body)
+theSplines <- bind_rows(temp)
+
+ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) + 
+  geom_xspline(spline_shape = -0.5, size=0.2) +
+  theme_few() + theme(axis.text.y = element_blank(),
+                      axis.title.y = element_blank(),
+                      axis.ticks.y = element_blank(),
+                      legend.position = "bottom",
+                      panel.border = element_blank()) +
+  xlab("Year") + scale_colour_discrete(guide=FALSE)
+
+ledge_df[ledge_df$party=="Republican",]$numTerms <- abs(ledge_df[ledge_df$party=="Republican",]$numTerms) * -1
+
+body <- ledge_df %>% 
+  filter(dur < 22000) %>%
+  filter(type=="rep") %>% 
+  filter(party %in% c("Democrat", "Republican"))%>% 
+  arrange(start, end) 
+
+# cheap and dirty way to move along a dataframe
+temp <- lapply(X=seq_len(nrow(body)), splinePoints, body)
+theSplines <- bind_rows(temp)
+
+
+ggplot(theSplines, aes(x, y, group=splineIndex, colour=party)) + 
+  geom_xspline(spline_shape = -0.5, size=0.2) +
+  scale_color_manual("US House\nof Representatives", values=c("blue", "red")) +
+  theme_few() + theme(axis.text.y = element_blank(),
+                      axis.title.y = element_blank(),
+                      axis.ticks.y = element_blank(),
+                      panel.border = element_blank()) +
+  xlab("Year")
+
+```
+
+## Credits, Rights, and How-to
 
 The source data for these plots is courtesy of [GovTrack.us](https://www.govtrack.us/), and specifically their [historical legislator](https://github.com/govtrack/congress-legislators) YAML dataset. GovTrack releases any of their copyrighted data into the public domain, under a [CC-BY Creative Commons](https://creativecommons.org/licenses/by/3.0/us/) license; I do the same for the plots and code used to create this.
 
