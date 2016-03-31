@@ -7,7 +7,7 @@ library(ggthemes)
 library(tidyr)
 
 
-ledge <- yaml.load_file("./data/legislators-historical.yaml")
+ledge <- yaml.load_file("./data/legislators-historical-unitedstates.yaml")
 
 # want to create a dataframe with id, name, term type, term start, term end, and party out of the ledge object
 
@@ -16,6 +16,7 @@ extractElements <- function(e){
   firstName <- e$name$first
   lastName <- e$name$last
   gender<-e$bio$gender
+  bday <- if(is.null(e$bio$birthday)) "Unknown" else e$bio$birthday
 
   terms = bind_rows(lapply(e$terms, FUN=function(t) data.frame(
     type=t$type, 
@@ -46,6 +47,7 @@ extractElements <- function(e){
              firstName = rep(firstName, length(starts)),
              lastName = rep(lastName, length(starts)),
              gender = rep(gender, length(starts)),
+             birthday = rep(bday, length(starts)),
              numTerms = runs$lengths,
              start = starts,
              end = ends,
