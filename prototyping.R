@@ -16,7 +16,7 @@ extractElements <- function(e){
   firstName <- e$name$first
   lastName <- e$name$last
   gender<-e$bio$gender
-  bday <- if(is.null(e$bio$birthday)) "Unknown" else e$bio$birthday
+  bday <- if(is.null(e$bio$birthday)) NA else e$bio$birthday
 
   terms = bind_rows(lapply(e$terms, FUN=function(t) data.frame(
     type=t$type, 
