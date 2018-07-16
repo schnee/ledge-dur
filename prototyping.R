@@ -5,9 +5,19 @@ library(ggplot2)
 library(ggalt)
 library(ggthemes)
 library(tidyr)
+library(httr)
 
+# points to the source-code-controlled data
+yaml_url <- "https://raw.githubusercontent.com/unitedstates/congress-legislators/master/legislators-historical.yaml"
 
-ledge <- yaml.load_file("./data/legislators-historical-unitedstates.yaml")
+r <- GET(yaml_url)
+if(r$status_code != 200){
+  stop("Bad URL Fetch")
+}
+
+ledge <- yaml.load(content(r, "text"))
+
+#ledge <- yaml.load_file("./data/legislators-historical.yaml")
 
 # want to create a dataframe with id, name, term type, term start, term end, and party out of the ledge object
 
@@ -65,7 +75,7 @@ splinePoints <- function(theIndex, df){
 
   # this output dataframe defines the shape of the spline. Lots of 
   # customization here.
-  data.frame(x=quantile(c(e$start, e$end), probs=c(0,.15,.85,1)), 
+  data.frame(x=as.Date(quantile(as.numeric(c(e$start, e$end)), probs=c(0,.15,.85,1)), origin = "1970-01-01"), 
              y=c(0, peak*.85, peak*.85, 0),
              splineIndex = e$id,
              party=e$party)
@@ -87,7 +97,7 @@ ledge_df[ledge_df$party=="Republican",]$numTerms <- ledge_df[ledge_df$party=="Re
 
 body <- ledge_df %>% 
   filter(dur < 22000) %>%
-  filter(type=="sen") %>% 
+  filter(type=="rep") %>% 
   filter(party %in% c("Democrat", "Republican"))%>% 
   arrange(start, end) 
 
